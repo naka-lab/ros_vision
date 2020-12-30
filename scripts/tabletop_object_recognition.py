@@ -73,9 +73,11 @@ def detect_objects( pc2 ):
     #o3d.visualization.draw_geometries([pcd])
 
     # 平面検出
-    plane_model, inliers = pcd.segment_plane(distance_threshold=0.01,
-                                            ransac_n=3,
-                                            num_iterations=1000)
+    thresh = rospy.get_param("object_rec/plane_detection/distance_threshold" )
+    ransac_n = rospy.get_param("object_rec/plane_detection/ransac_n" )
+    num_itr = rospy.get_param("object_rec/plane_detection/num_iterations" )
+    plane_model, inliers = pcd.segment_plane(distance_threshold=thresh, ransac_n=ransac_n, num_iterations=num_itr)
+
     [a, b, c, d] = plane_model
     print("equation: %lfx + %lfy + %lfz + %lf = 0" % (a, b, c, d))
     plane_cloud = pcd.select_by_index(inliers)
@@ -86,10 +88,13 @@ def detect_objects( pc2 ):
 
 
     # クラスタリング
+    eps = rospy.get_param("object_rec/pointcloud_clustering/eps" )
+    min_pts = rospy.get_param("object_rec/pointcloud_clustering/min_points" )
+
     with o3d.utility.VerbosityContextManager(
             o3d.utility.VerbosityLevel.Debug) as cm:
         labels = np.array(
-            object_cloud.cluster_dbscan(eps=0.03, min_points=20, print_progress=False))
+            object_cloud.cluster_dbscan(eps=eps, min_points=min_pts, print_progress=False))
     max_label = labels.max()
     print(f"point cloud has {max_label + 1} clusters")
 
@@ -98,6 +103,7 @@ def detect_objects( pc2 ):
     points = np.asarray(object_cloud.points)
     rects = []
     positions = []
+    rect_min = rospy.get_param("object_rec/pointcloud_clustering/rect_min", )
     for l in range(max_label+1):
         l_th_obj = (labels==l)
         top_left = np.min(pix_pos[l_th_obj], 0)
@@ -107,7 +113,7 @@ def detect_objects( pc2 ):
         w = bottom_right[0]-top_left[0]
         h = bottom_right[1]-top_left[1]
 
-        if w>30 and h>30: 
+        if w>rect_min and h>rect_min: 
             rects.append( (top_left, bottom_right) )
             
             pos = np.average( points[l_th_obj], axis=0 )
@@ -155,18 +161,22 @@ def pointcloud_cb( pc2 ):
     send_objects_info( rects, positions, labels )
 
     # 結果を表示
-    img_display = cv2.cvtColor( __color, cv2.COLOR_RGB2BGR )
-    pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int)
-    for r, l  in zip(rects, labels):
-        cv2.rectangle( img_display, r[0], r[1], (255, 0, 0), 3 )
-        cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 1, cv2.LINE_AA)
 
-    for p in plane_cloud.normals:
-        img_display[ int(p[1]), int(p[0]) ] = np.zeros(3)
+    if rospy.get_param("object_rec/show_result" ):
+        img_display = cv2.cvtColor( __color, cv2.COLOR_RGB2BGR )
+        pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int)
+        for r, l  in zip(rects, labels):
+            cv2.rectangle( img_display, r[0], r[1], (255, 0, 0), 3 )
+            cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 1, cv2.LINE_AA)
 
-    cv2.namedWindow("img")
-    cv2.imshow("img", img_display)
-    cv2.waitKey(10)
+        for p in plane_cloud.normals:
+            img_display[ int(p[1]), int(p[0]) ] = np.zeros(3)
+
+        cv2.namedWindow("img")
+        cv2.imshow("img", img_display)
+        cv2.waitKey(10)
+    else:
+        cv2.destroyAllWindows()
 
 
 # 特徴量抽出
@@ -218,6 +228,17 @@ def main():
     rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb)
     rospy.Subscriber("camera/color/image_raw", Image, image_cb)
     pub_objinfo = rospy.Publisher('/object_rec/object_info', String, queue_size=1)
+
+    # デフォルトパラメータ
+    rospy.set_param("object_rec/plane_detection/distance_threshold", 0.01 )
+    rospy.set_param("object_rec/plane_detection/ransac_n", 3 )
+    rospy.set_param("object_rec/plane_detection/num_iterations", 1000 )
+    rospy.set_param("object_rec/pointcloud_clustering/eps", 0.03 )
+    rospy.set_param("object_rec/pointcloud_clustering/min_points", 20 )
+    rospy.set_param("object_rec/pointcloud_clustering/rect_min", 30 )
+    rospy.set_param("object_rec/show_result", True )
+
+
     rospy.spin()
         
 if __name__ == '__main__':
