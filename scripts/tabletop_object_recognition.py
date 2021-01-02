@@ -22,41 +22,18 @@ OBJECT_DIR = "objects"
 # 物体情報のpublisher
 pub_objinfo = None
 
-# 受信したカラー画像
-__color = None
-
 # 特徴量抽出用ネットワーク
 feat_extract_net = cv2.dnn.readNetFromCaffe( "bvlc_googlenet.prototxt", "bvlc_googlenet.caffemodel")
 
 # 物体認識用SVM
 svm = None
 
-def image_cb( img ):
-    global __color
-    __color = np.frombuffer(img.data, dtype=np.uint8).reshape(img.height, img.width, -1)
-
 # 物体検出
-def detect_objects( pc2 ):
-    cloud_points = list(point_cloud2.read_points(pc2, field_names=["x", "y", "z"], skip_nans=False)) 
-    cloud_points = np.array(cloud_points)
-
-    """    
-    color = []
-    for x in cloud_points[:,3]:
-        s = struct.pack('>f' ,x)
-        i = struct.unpack('>l',s)[0]
-        pack = ctypes.c_uint32(i).value
-        r = (pack & 0x00FF0000)>> 16
-        g = (pack & 0x0000FF00)>> 8
-        b = (pack & 0x000000FF)
-        color.append( (b,g,r) )
-    color = np.array(color,dtype=np.uint8).reshape(pc2.height, pc2.width, 3)
-    """
-
+def detect_objects( cloud_points, h, w ):
     # ポイントクラウドの画素位置を計算
-    pix_pos = np.zeros((pc2.height, pc2.width, 3))
-    y_index = np.arange( pc2.height )
-    x_index = np.arange( pc2.width  )
+    pix_pos = np.zeros((h, w, 3))
+    y_index = np.arange( h )
+    x_index = np.arange( w  )
     pix_pos[:,:,0], pix_pos[:,:,1] = np.meshgrid(x_index, y_index)
     pix_pos = pix_pos.reshape( -1, 3 )
 
@@ -144,11 +121,14 @@ def send_objects_info(rects, positions, labels):
 
 
 def pointcloud_cb( pc2 ):
-    global __color
-    img = cv2.cvtColor( __color, cv2.COLOR_RGB2BGR )
+    # この方法だと遅い
+    #cloud_points = list(point_cloud2.read_points(pc2, field_names=["x", "y", "z"], skip_nans=False)) 
+    #cloud_points = np.array(cloud_points)
+    cloud_points = np.frombuffer(pc2.data, dtype=np.float32).reshape(-1, 8)[:,0:3]
+    img = np.frombuffer(pc2.data, dtype=np.uint8).reshape(pc2.height, pc2.width, 32)[:, :,16:19]
 
     # 物体検出
-    rects, positions, object_cloud, plane_cloud = detect_objects(pc2)
+    rects, positions, object_cloud, plane_cloud = detect_objects(cloud_points, pc2.height, pc2.width)
 
     object_images = []
     for r in rects:
@@ -157,13 +137,12 @@ def pointcloud_cb( pc2 ):
     # 物体認識
     labels = svm_recog( object_images )
 
-    # 
+    # 検出・認識された物体情報をpublish
     send_objects_info( rects, positions, labels )
 
     # 結果を表示
-
     if rospy.get_param("object_rec/show_result" ):
-        img_display = cv2.cvtColor( __color, cv2.COLOR_RGB2BGR )
+        img_display = np.copy(img)
         pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int)
         for r, l  in zip(rects, labels):
             cv2.rectangle( img_display, r[0], r[1], (255, 0, 0), 3 )
@@ -225,8 +204,7 @@ def main():
     global pub_objinfo
     svm_train()
     rospy.init_node('object_rec', anonymous=True)
-    rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb)
-    rospy.Subscriber("camera/color/image_raw", Image, image_cb)
+    rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     pub_objinfo = rospy.Publisher('/object_rec/object_info', String, queue_size=1)
 
     # デフォルトパラメータ
@@ -237,7 +215,6 @@ def main():
     rospy.set_param("object_rec/pointcloud_clustering/min_points", 20 )
     rospy.set_param("object_rec/pointcloud_clustering/rect_min", 30 )
     rospy.set_param("object_rec/show_result", True )
-
 
     rospy.spin()
         
