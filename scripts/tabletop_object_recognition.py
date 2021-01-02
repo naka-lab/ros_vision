@@ -121,6 +121,11 @@ def send_objects_info(rects, positions, labels):
 
 
 def pointcloud_cb( pc2 ):
+    lag = rospy.get_time()-pc2.header.stamp.secs
+    if lag>0.5:
+        print("discard queue")
+        return 
+
     # この方法だと遅い
     #cloud_points = list(point_cloud2.read_points(pc2, field_names=["x", "y", "z"], skip_nans=False)) 
     #cloud_points = np.array(cloud_points)
