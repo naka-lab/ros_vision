@@ -9,14 +9,15 @@ def callback(data):
 
     for o in obj_info:
         print( "label:", o["label"] )
-        print( "topleft:", o["topleft"] )
-        print( "bottomright:", o["bottomright"] )
+        print( "lefttop:", o["lefttop"] )
+        print( "rightbottom:", o["rightbottom"] )
         print( "position:", o["position"] )
         print( "-----------" )
     
 def main():
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber("/object_rec/object_info", String, callback)
+    #rospy.Subscriber("/ssd_object_rec/object_info", String, callback)
     rospy.spin()
         
 if __name__ == '__main__':
