@@ -30,11 +30,12 @@
 
 - 物体認識結果の受信
   - String型の`/object_rec/object_info`というトピック名でyaml形式の文字列送信されます
-  - 受信方法は，(これ)[https://github.com/naka-lab/ros_vision/blob/master/scripts/object_info_getter.py]を参照
+  - 受信方法は，[これ](https://github.com/naka-lab/ros_vision/blob/master/scripts/object_info_getter.py)を参照
 
 ### パラメータ
 - 物体検出・認識のパラメータはrosparamで設定
 - `rosrun ros_utils param_setting_gui.py`でGUIからも設定可能
+- 設定可能なパラメータ
   - `object_rec/plane_detection/distance_threshold`：平面に含まれる点の距離
   - `object_rec/plane_detection/ransac_n`：平面のパラメータを計算するのに使われる点の数
   - `object_rec/plane_detection/num_iterations`：ransacの繰り返し回数
@@ -53,3 +54,28 @@
   - ウィンドウに表示されている画像をドラッグして保存領域を設定
   - `s`をを押すと画像が連番で，`~/catkin_ws/src/ros_vision/scripts/tmp_img/`に保存される
   - 保存された画像を`~/catkin_ws/src/ros_vision/scripts/objects/`内に`000`，`001`，・・・へ移動する
+
+
+## SSDに基づく物体検出と認識
+### ノードの実行
+- realsenseを起動
+  ```
+  roslaunch realsense2_camera rs_rgbd.launch align_depth:=True
+  ```
+
+- 物体検出・認識ノード起動
+  ```
+  rosrun ros_vision ssd_object_recognition.py
+  ```
+
+- 物体認識結果の受信
+  - String型の`/ssd_object_rec/object_info`というトピック名でyaml形式の文字列送信されます
+  - 受信方法は，[これ](https://github.com/naka-lab/ros_vision/blob/master/scripts/object_info_getter.py)を参照
+  - 物体のlabel番号とラベルの対応は[このソース](https://github.com/naka-lab/ros_vision/blob/master/scripts/ssd_object_recognition.py)内の`classNames`を参照
+  
+### パラメータ
+- 物体検出・認識のパラメータはrosparamで設定
+- `rosrun ros_utils param_setting_gui.py`でGUIからも設定可能
+- 設定可能なパラメータ
+  - `ssd_object_rec/conf_thresh`：物体検出するconfidenceのしきい値
+  - `ssd_object_rec/show_result`：結果を表示するかどうか
