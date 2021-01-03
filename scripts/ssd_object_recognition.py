@@ -33,11 +33,9 @@ classNames = {0: 'background',
  
 # 物体情報のpublisher
 pub_objinfo = None
-
  
 # モデルの読み込み
-model = cv2.dnn.readNetFromTensorflow('frozen_inference_graph.pb',
-                                      'ssd_mobilenet_v2_coco_2018_03_29.pbtxt')
+model = cv2.dnn.readNetFromTensorflow('frozen_inference_graph.pb', 'ssd_mobilenet_v2_coco_2018_03_29.pbtxt')
 
 # 物体情報を送信
 def send_objects_info(rects, positions, labels):
