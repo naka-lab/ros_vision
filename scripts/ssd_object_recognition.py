@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 import rospy
@@ -8,7 +7,11 @@ import cv2
 import numpy as np
 import tf
 import yaml
+import os
  
+path = os.path.abspath(os.path.dirname(__file__))
+os.chdir(path)
+
 # モデルの中の訓練されたクラス
 classNames = {0: 'background',
               1: 'person', 2: 'bicycle', 3: 'car', 4: 'motorcycle', 5: 'airplane', 6: 'bus',
@@ -47,16 +50,13 @@ def send_objects_info(rects, positions, labels):
                 rospy.Time.now(), "obj:%d,id:%d"%(i, labels[i]), "camera_depth_optical_frame")
         object_info.append(
             { 
-                "lefttop" : [ int(i) for i in rects[i][0]],
-                "rightbottom" : [ int(i) for i in rects[i][1]],
+                "lefttop" : [ int(r) for r in rects[i][0]],
+                "rightbottom" : [ int(r) for r in rects[i][1]],
                 "position" : [ float(p) for p in positions[i]],
                 "label" : int(labels[i])
              }
         )
     pub_objinfo.publish( yaml.dump( object_info )  )
-
-    print(yaml.dump( object_info ) )
-
 
 def pointcloud_cb( pc2 ):
     lag = rospy.get_time()-pc2.header.stamp.secs
@@ -78,9 +78,10 @@ def pointcloud_cb( pc2 ):
     positions = []
     labels = []
     N = 0
+    conf_thresh = rospy.get_param("ssd_object_rec/conf_thresh" )
     for detection in detections:
         confidence = detection[2]
-        if confidence > 0.5:
+        if confidence > conf_thresh:
             idx = detection[1]
             class_name = classNames[idx]
     
@@ -98,16 +99,24 @@ def pointcloud_cb( pc2 ):
     
     send_objects_info( rects, positions, labels )
 
-    img_display = np.copy( img )
-    for i in range(N):
-        cv2.rectangle(img_display, rects[i][0], rects[i][1], (0, 0, 255), thickness=2)
-        cv2.putText(img_display, class_name, rects[i][0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 1, cv2.LINE_AA)
-    cv2.imshow('image', img_display)    
-    cv2.waitKey(10)
+    if rospy.get_param("ssd_object_rec/show_result" ):
+        img_display = np.copy( img )
+        for i in range(N):
+            cv2.rectangle(img_display, rects[i][0], rects[i][1], (0, 0, 255), thickness=2)
+            cv2.putText(img_display, class_name, rects[i][0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 1, cv2.LINE_AA)
+        cv2.imshow('image', img_display)    
+        cv2.waitKey(10)
+    else:
+        cv2.destroyAllWindows()
 
 def main():
     global pub_objinfo
     rospy.init_node('ssd_object_rec', anonymous=True)
+
+    # デフォルトパラメータ
+    rospy.set_param("ssd_object_rec/conf_thresh", 0.5 )
+    rospy.set_param("ssd_object_rec/show_result", True )
+
     rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     pub_objinfo = rospy.Publisher('/ssd_object_rec/object_info', String, queue_size=1)
     rospy.spin()
