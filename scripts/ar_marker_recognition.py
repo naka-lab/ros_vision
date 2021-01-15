@@ -72,10 +72,10 @@ def pointcloud_cb( pc2 ):
 
 def main():
     global pub_objinfo, dictionary
-    rospy.init_node('ar_maker_rec', anonymous=True)
+    rospy.init_node('ar_marker_rec', anonymous=True)
 
     rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
-    pub_objinfo = rospy.Publisher('/ar_majer_rec/object_info', String, queue_size=1)
+    pub_objinfo = rospy.Publisher('/ar_marker_rec/object_info', String, queue_size=1)
 
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
