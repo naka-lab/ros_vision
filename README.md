@@ -25,7 +25,7 @@
 
 - 物体検出・認識ノード起動
   ```
-  rosrun ros_vision tabletopsd_object_recognition.py 
+  rosrun ros_vision tabletop_object_recognition.py 
   ```
 
 - 物体認識結果の受信
