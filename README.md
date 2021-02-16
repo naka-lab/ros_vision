@@ -16,6 +16,12 @@
   git clone https://github.com/naka-lab/ros_utils.git
   ```
 
+- 追加パッケージをダウンロード
+  ```
+  git clone https://github.com/ros-drivers/rgbd_launch.git
+  ```
+
+
 ## 平面検出に基づく物体検出と，CNN+SVMによる物体認識
 ### ノードの実行
 - realsenseを起動
