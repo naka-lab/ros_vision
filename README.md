@@ -12,9 +12,10 @@
   ```
   ※1つ目のコマンドはproxyを設定しているので，学外でインストールするときは注意
 
-- 物体認識rosパッケージをダウンロード
+- 物体認識rosパッケージと依存ライブラリをダウンロード
   ```
   pip install open3d opencv-python
+  pip install opencv-contrib-python
   cd ~/catkin_ws/src
   git clone https://github.com/naka-lab/ros_vision.git
   git clone https://github.com/naka-lab/ros_utils.git
