@@ -2,15 +2,15 @@
 
 ## 準備
 - Realsenseパッケージをインストール
-```
-sudo apt-key adv --keyserver keys.gnupg.net --keyserver-option http-proxy=http://proxy.uec.ac.jp:8080 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE  || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
-sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo focal main" -u
-sudo apt-get install librealsense2-dkms
-sudo apt-get install librealsense2-utils
-sudo apt install ros-noetic-rgbd-launch
-sudo apt-get install ros-noetic-realsense2-camera
-```
-※1つ目のコマンドはproxyを設定しているので，学外でインストールするときは注意
+  ```
+  sudo apt-key adv --keyserver keys.gnupg.net --keyserver-option http-proxy=http://proxy.uec.ac.jp:8080 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE  || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+  sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo focal main" -u
+  sudo apt-get install librealsense2-dkms
+  sudo apt-get install librealsense2-utils
+  sudo apt install ros-noetic-rgbd-launch
+  sudo apt-get install ros-noetic-realsense2-camera
+  ```
+  ※1つ目のコマンドはproxyを設定しているので，学外でインストールするときは注意
 
 - 物体認識rosパッケージをダウンロード
   ```
