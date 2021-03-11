@@ -107,3 +107,24 @@
 - 設定可能なパラメータ
   - `ssd_object_rec/conf_thresh`：物体検出するconfidenceのしきい値
   - `ssd_object_rec/show_result`：結果を表示するかどうか
+
+## ARマーカー認識
+### ノードの実行
+- realsenseを起動
+  ```
+  roslaunch realsense2_camera rs_rgbd.launch align_depth:=True
+  ```
+
+- ARマーカー認識ノード起動
+  ```
+  rosrun ros_vision ar_marker_recognition.py
+  ```
+
+- 物体認識結果の受信
+  - String型の`/ar_marker_rec/object_info`というトピック名でyaml形式の文字列送信されます
+  - 受信方法は，[これ](https://github.com/naka-lab/ros_vision/blob/master/scripts/object_info_getter.py)を参照
+  - 物体のlabel番号にARマーカーのIDが入る
+
+### ARマーカー
+- 0〜9までのARマーカーは[ここ](https://github.com/naka-lab/ros_vision/tree/master/scripts/ARMarker)
+- それ以外のマーカーが必要な場合には，[生成プログラム](scripts/ar_gen.py)を実行
