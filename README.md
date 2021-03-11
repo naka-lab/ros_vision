@@ -1,6 +1,27 @@
 # ros_vision
 
 ## 準備
+- Realsenseパッケージをインストール
+```
+sudo apt-key adv --keyserver keys.gnupg.net --keyserver-option http-proxy=http://proxy.uec.ac.jp:8080 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE  || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo focal main" -u
+sudo apt-get install librealsense2-dkms
+sudo apt-get install librealsense2-utils
+sudo apt install ros-noetic-rgbd-launch
+sudo apt-get install ros-noetic-realsense2-camera
+```
+※1つ目のコマンドはproxyを設定しているので，学外でインストールするときは注意
+
+- 物体認識rosパッケージをダウンロード
+  ```
+  pip install open3d opencv-python
+  cd ~/catkin_ws/src
+  git clone https://github.com/naka-lab/ros_vision.git
+  git clone https://github.com/naka-lab/ros_utils.git
+  ```
+
+
+<!--
 - [ここ](https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md)に従いrealsenseのライブラリをインストール
 - realsense rosパッケージをダウンロード
   ```
@@ -20,7 +41,7 @@
   ```
   git clone https://github.com/ros-drivers/rgbd_launch.git
   ```
-
+-->
 
 ## 平面検出に基づく物体検出と，CNN+SVMによる物体認識
 ### ノードの実行
