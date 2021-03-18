@@ -18,6 +18,7 @@ def main():
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber("/object_rec/object_info", String, callback)
     #rospy.Subscriber("/ssd_object_rec/object_info", String, callback)
+    #rospy.Subscriber("/ar_marker_rec/object_info", String, callback)
     rospy.spin()
         
 if __name__ == '__main__':
