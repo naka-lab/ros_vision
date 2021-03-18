@@ -7,6 +7,8 @@ import cv2
 import os
 import time
 
+os.chdir(os.path.dirname(__file__))
+
 SAVE_DIR = "tmp_img"
 
 
