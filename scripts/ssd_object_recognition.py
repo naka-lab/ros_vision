@@ -45,7 +45,7 @@ def send_objects_info(rects, positions, labels):
     for i, p in enumerate(positions):
         br.sendTransform(p,
                 tf.transformations.quaternion_from_euler(0, 0, 0),
-                rospy.Time.now(), "obj:%d,id:%d"%(i, labels[i]), "camera_link")
+                rospy.Time.now(), "obj:%d,id:%d"%(i, labels[i]), "camera_depth_optical_frame")
         object_info.append(
             { 
                 "lefttop" : [ int(r) for r in rects[i][0]],
