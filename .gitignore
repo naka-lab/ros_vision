@@ -1,2 +1,4 @@
 /scripts/tmp_img/
 scripts/objects/*/*
+*.pyc
+scripts/open_pose_utils/pose_model_scratch.pth
