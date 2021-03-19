@@ -16,6 +16,7 @@
   ```
   pip install open3d opencv-python
   pip install opencv-contrib-python
+  pip install gdown
   cd ~/catkin_ws/src
   git clone https://github.com/naka-lab/ros_vision.git
   git clone https://github.com/naka-lab/ros_utils.git
@@ -122,9 +123,29 @@
 
 - 物体認識結果の受信
   - String型の`/ar_marker_rec/object_info`というトピック名でyaml形式の文字列送信されます
-  - 受信方法は，[これ](https://github.com/naka-lab/ros_vision/blob/master/scripts/object_info_getter.py)を参照
+  - 受信方法は，[これ](scripts/object_info_getter.py)を参照
   - 物体のlabel番号にARマーカーのIDが入る
 
 ### ARマーカー
 - 0〜9までのARマーカーは[ここ](https://github.com/naka-lab/ros_vision/tree/master/scripts/ARMarker)
 - それ以外のマーカーが必要な場合には，[生成プログラム](scripts/ar_gen.py)を実行
+
+
+
+## 人の姿勢推定
+### ノードの実行
+- realsenseを起動
+  ```
+  roslaunch realsense2_camera rs_rgbd.launch align_depth:=True
+  ```
+
+- OpenPoseノード起動
+  ```
+  rosrun ros_vision open_pose.py
+  ```
+  初回起動時はモデルをダウンロードしてくるため起動に時間がかかる
+
+
+- 姿勢推定結果の受信
+  - String型の`/open_pos/pose_info`というトピック名でyaml形式の文字列送信されます
+  - 受信方法は，[これ](scripts/pose_info_getter.py)を参照
