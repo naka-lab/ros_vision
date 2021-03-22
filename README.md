@@ -7,7 +7,7 @@
   sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo focal main" -u
   sudo apt-get install librealsense2-dkms
   sudo apt-get install librealsense2-utils
-  sudo apt install ros-noetic-rgbd-launch
+  sudo apt-get install ros-noetic-rgbd-launch
   sudo apt-get install ros-noetic-realsense2-camera
   ```
   ※1つ目のコマンドはproxyを設定しているので，学外でインストールするときは注意
