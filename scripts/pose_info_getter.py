@@ -38,10 +38,10 @@ def callback(data):
         # 送られてくる座標はカメラ座標系（camera_depth_optical_frame）で送られてくるので注意
         # x: 左側が正，右側が負
         # y: 下が正，上が負
-        if p["conf"][1]>0 and p["conf"][4]>0 and p["joint_pos_3d"][0][1] > p["joint_pos_3d"][4][1]:
+        if p["conf"][1]>0 and p["conf"][4]>0 and p["joint_pos_3d"][1][1] > p["joint_pos_3d"][4][1]:
             print("右手上げてる")
 
-        if p["conf"][1]>0 and p["conf"][7]>0 and p["joint_pos_3d"][0][1] > p["joint_pos_3d"][7][1]:
+        if p["conf"][1]>0 and p["conf"][7]>0 and p["joint_pos_3d"][1][1] > p["joint_pos_3d"][7][1]:
             print("左手上げてる")
 
 
