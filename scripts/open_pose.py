@@ -21,7 +21,7 @@ os.chdir( os.path.abspath(os.path.dirname(__file__)) )
 def ilist(lst): return [ int(i) for i in lst ]
 def flist(lst): return [ float(i) for i in lst ]
 
-def send_pose_info(pos2d_list, pos3d_list, conf_list):
+def send_pose_info(pos2d_list, pos3d_list, facedir_list, conf_list):
     pose_info = []
 
     for n in range(len(pos2d_list)):
@@ -30,11 +30,12 @@ def send_pose_info(pos2d_list, pos3d_list, conf_list):
                 "joint_pos_2d" : [ flist(p) for p in pos2d_list[n] ],
                 "joint_pos_3d" : [ flist(p) for p in pos3d_list[n] ],
                 "conf" : flist( conf_list[n] ),
+                "facedir" : flist( facedir_list[n] )
              }
         )
     pub_pose.publish( yaml.dump( pose_info )  )
 
-def send_maker( x, y, z, id ):
+def send_maker( x, y, z, id, scale=0.05, rgb=(1,0,0) ):
     marker_data = Marker()
     marker_data.header.frame_id = "camera_depth_optical_frame"
     marker_data.header.stamp = rospy.Time.now()
@@ -53,14 +54,14 @@ def send_maker( x, y, z, id ):
     marker_data.pose.orientation.z=1.0
     marker_data.pose.orientation.w=0.0
 
-    marker_data.color.r = 1.0
-    marker_data.color.g = 0.0
-    marker_data.color.b = 0.0
+    marker_data.color.r = rgb[0]
+    marker_data.color.g = rgb[1]
+    marker_data.color.b = rgb[2]
     marker_data.color.a = 1.0
 
-    marker_data.scale.x = 0.05
-    marker_data.scale.y = 0.05
-    marker_data.scale.z = 0.05
+    marker_data.scale.x = scale
+    marker_data.scale.y = scale
+    marker_data.scale.z = scale
 
     marker_data.lifetime = rospy.Duration(1.0)
     marker_data.type = Marker.SPHERE
@@ -80,9 +81,10 @@ def pointcloud_cb( pc2 ):
     pos2d_list = []
     pos3d_list = []
     conf_list = []
+    facedir_list = []
     for n in range(len(poses)):
         pos3d = []
-        pos2d = poses[n][0]
+        pos2d = np.array( poses[n][0] )
         conf = poses[n][1] 
 
         for i in range(len(pos2d)):
@@ -97,11 +99,35 @@ def pointcloud_cb( pc2 ):
                 send_maker( p[0], p[1], p[2], id )
             id += 1
 
+        # 顔向き計算
+        # 0:鼻，14:右目，15:左目，16:右耳，17:左耳
+        facedir = (0, 0, 0)
+        if conf[0]!=0 and conf[1]!=0 and conf[14]!=0 and conf[15]!=0:
+            eyes_2d = (pos2d[14] + pos2d[15])/2
+            nose_2d = pos2d[0]
+            mouse_2d = ilist( eyes_2d + (nose_2d - eyes_2d)*2.5 )
+            mouse_3d = xyz[ mouse_2d[1], mouse_2d[0] ]
+
+            v1 = pos3d[15] - pos3d[14]
+            v2 = pos3d[15] - mouse_3d
+
+            facedir = np.cross(v1, v2)
+            facedir = facedir/np.linalg.norm(facedir)
+            print("fecedir:", facedir)
+            print("---------")
+
+            # 可視化
+            for i in range(10):
+                p = pos3d[0] + facedir*i/10
+                send_maker( p[0], p[1], p[2], id, 0.02, (0,1,0) )
+                id += 1
+
         pos2d_list.append( pos2d )
         pos3d_list.append( pos3d )
         conf_list.append( conf )
+        facedir_list.append( facedir )
 
-    send_pose_info( pos2d_list, pos3d_list, conf_list )
+    send_pose_info( pos2d_list, pos3d_list, facedir_list, conf_list )
     cv2.imshow('img',result_img)
     cv2.waitKey(10)
 

@@ -32,6 +32,7 @@ def callback(data):
     for p in pose_info:
         print( "画像座標:", p["joint_pos_2d"] )
         print( "三次元座標:", p["joint_pos_3d"] )
+        print( "顔向きの方向の単位ベクトル", p["facedir"] )
         print( "確信度:", p["conf"] )
         print( "-----------" )
 
