@@ -65,12 +65,14 @@
 - 物体検出・認識のパラメータはrosparamで設定
 - `rosrun ros_utils param_setting_gui.py`でGUIからも設定可能
 - 設定可能なパラメータ
+  - `point_cloud/rotate_image`:画像を回転するかどうか 
   - `object_rec/plane_detection/distance_threshold`：平面に含まれる点の距離
   - `object_rec/plane_detection/ransac_n`：平面のパラメータを計算するのに使われる点の数
   - `object_rec/plane_detection/num_iterations`：ransacの繰り返し回数
   - `object_rec/pointcloud_clustering/eps`：1つの物体に含まれる点の密度
   - `object_rec/pointcloud_clustering/min_points`：物体として検出される最小の点の数
   - `object_rec/pointcloud_clustering/rect_min`：物体として検出される最小の縦と横の長さ
+  - `object_rec/pointcloud_clustering/rect_max`：物体として検出される最大の縦と横の長さ
   - `object_rec/show_result`：結果を表示するかどうか
 
 ### 認識物体の追加・変更
@@ -129,6 +131,9 @@
 ### ARマーカー
 - 0〜9までのARマーカーは[ここ](https://github.com/naka-lab/ros_vision/tree/master/scripts/ARMarker)
 - それ以外のマーカーが必要な場合には，[生成プログラム](scripts/ar_gen.py)を実行
+
+### パラメータ
+- `point_cloud/rotate_image`:画像を回転するかどうか 
 
 
 
