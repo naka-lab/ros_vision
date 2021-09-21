@@ -1,0 +1,4 @@
+<launch>
+  <param name="point_cloud/rotate_image" value="true"/>
+  <node pkg="ros_vision" type="ar_marker_recognition.py" name="ar_maker_recog" cwd="node" output="screen" />
+</launch>
