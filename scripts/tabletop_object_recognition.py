@@ -29,7 +29,7 @@ feat_extract_net = cv2.dnn.readNetFromCaffe( "bvlc_googlenet.prototxt", "bvlc_go
 svm = None
 
 # 物体検出
-def detect_objects( cloud_points, h, w ):
+def detect_objects( cloud_points, h, w, depth_thresh ):
     # ポイントクラウドの画素位置を計算
     pix_pos = np.zeros((h, w, 3))
     y_index = np.arange( h )
@@ -38,7 +38,7 @@ def detect_objects( cloud_points, h, w ):
     pix_pos = pix_pos.reshape( -1, 3 )
 
     # 範囲を限定する
-    filter_cond = (cloud_points[:,2]<2.0) * (cloud_points[:,2]>0)
+    filter_cond = (cloud_points[:,2]<depth_thresh) * (cloud_points[:,2]>0)
     cloud_points = cloud_points[ filter_cond ].reshape(-1, 3)[::10,:]
     pix_pos = pix_pos[ filter_cond ].reshape(-1, 3)[::10,:]
     #color = __color.flatten().reshape(-1, 3)[ filter_cond ][::10,:]
@@ -72,7 +72,11 @@ def detect_objects( cloud_points, h, w ):
             o3d.utility.VerbosityLevel.Debug) as cm:
         labels = np.array(
             object_cloud.cluster_dbscan(eps=eps, min_points=min_pts, print_progress=False))
-    max_label = labels.max()
+
+    if len(labels):
+        max_label = labels.max()
+    else:
+        max_label = -1
     print(f"point cloud has {max_label + 1} clusters")
 
     # 画像上の矩形を計算
@@ -142,14 +146,18 @@ def pointcloud_cb( pc2 ):
         height, width = width, height
 
     # 物体検出
-    rects, positions, object_cloud, plane_cloud = detect_objects(cloud_points, height, width)
+    depth_thresh = rospy.get_param("object_rec/plane_detection/depth_threshold")
+    rects, positions, object_cloud, plane_cloud = detect_objects(cloud_points, height, width, depth_thresh)
 
     object_images = []
     for r in rects:
         object_images.append( img[ r[0][1]:r[1][1], r[0][0]:r[1][0], : ] )
 
     # 物体認識
-    labels = svm_recog( object_images )
+    if len(object_images):
+        labels = svm_recog( object_images )
+    else:
+        labels = []
 
     # 検出・認識された物体情報をpublish
     send_objects_info( rects, positions, labels )
@@ -227,6 +235,7 @@ def main():
 
     # デフォルトパラメータ
     set_param("point_cloud/rotate_image", False )
+    set_param("object_rec/plane_detection/depth_threshold", 2.0 )
     set_param("object_rec/plane_detection/distance_threshold", 0.01 )
     set_param("object_rec/plane_detection/ransac_n", 3 )
     set_param("object_rec/plane_detection/num_iterations", 1000 )
