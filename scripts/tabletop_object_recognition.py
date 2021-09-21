@@ -39,8 +39,8 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
 
     # 範囲を限定する
     filter_cond = (cloud_points[:,2]<depth_thresh) * (cloud_points[:,2]>0)
-    cloud_points = cloud_points[ filter_cond ].reshape(-1, 3)[::10,:]
-    pix_pos = pix_pos[ filter_cond ].reshape(-1, 3)[::10,:]
+    cloud_points = cloud_points[ filter_cond ].reshape(-1, 3)[::5,:]
+    pix_pos = pix_pos[ filter_cond ].reshape(-1, 3)[::5,:]
     #color = __color.flatten().reshape(-1, 3)[ filter_cond ][::10,:]
 
     pcd = o3d.geometry.PointCloud()
@@ -85,6 +85,7 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
     rects = []
     positions = []
     rect_min = rospy.get_param("object_rec/pointcloud_clustering/rect_min", )
+    rect_max = rospy.get_param("object_rec/pointcloud_clustering/rect_max", )
     for l in range(max_label+1):
         l_th_obj = (labels==l)
         top_left = np.min(pix_pos[l_th_obj], 0)
@@ -94,7 +95,7 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
         w = bottom_right[0]-top_left[0]
         h = bottom_right[1]-top_left[1]
 
-        if w>rect_min and h>rect_min: 
+        if w>rect_min and h>rect_min and w<rect_max and h<rect_max: 
             rects.append( (top_left, bottom_right) )
             
             pos = np.average( points[l_th_obj], axis=0 )
@@ -235,13 +236,14 @@ def main():
 
     # デフォルトパラメータ
     set_param("point_cloud/rotate_image", False )
-    set_param("object_rec/plane_detection/depth_threshold", 2.0 )
-    set_param("object_rec/plane_detection/distance_threshold", 0.01 )
+    set_param("object_rec/plane_detection/depth_threshold", 1.3 )
+    set_param("object_rec/plane_detection/distance_threshold", 0.03 )
     set_param("object_rec/plane_detection/ransac_n", 3 )
     set_param("object_rec/plane_detection/num_iterations", 1000 )
-    set_param("object_rec/pointcloud_clustering/eps", 0.03 )
-    set_param("object_rec/pointcloud_clustering/min_points", 20 )
-    set_param("object_rec/pointcloud_clustering/rect_min", 30 )
+    set_param("object_rec/pointcloud_clustering/eps", 0.01 )
+    set_param("object_rec/pointcloud_clustering/min_points", 10 )
+    set_param("object_rec/pointcloud_clustering/rect_min", 20 )
+    set_param("object_rec/pointcloud_clustering/rect_max", 100 )
     set_param("object_rec/show_result", True )
 
     rospy.spin()
