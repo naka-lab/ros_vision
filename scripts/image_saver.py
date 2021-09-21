@@ -52,6 +52,9 @@ def image_cb( img ):
     cv2.setMouseCallback("img", mouse_event)
 
     img = np.frombuffer(img.data, dtype=np.uint8).reshape(img.height, img.width, -1)
+    if rospy.get_param("point_cloud/rotate_image"):
+        img =  cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+
     img_display = cv2.cvtColor( img, cv2.COLOR_RGB2BGR )
 
     if pt1!=None and pt2!=None:
@@ -69,9 +72,18 @@ def image_cb( img ):
         cv2.destroyAllWindows()
         rosnode.kill_nodes([rospy.get_name() ])
 
+def set_param( name, value ):
+    # 存在しなければドフォルト値，存在すればその値を利用
+    value = rospy.get_param( name, value )
+    rospy.set_param( name, value )
+
 
 def main():
     rospy.init_node('image_saver', anonymous=True)
+
+    # デフォルトパラメータ
+    set_param("point_cloud/rotate_image", False )
+
     rospy.Subscriber("camera/color/image_raw", Image, image_cb)
 
     time.sleep(1)

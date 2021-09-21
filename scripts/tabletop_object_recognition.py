@@ -132,8 +132,17 @@ def pointcloud_cb( pc2 ):
     cloud_points = np.frombuffer(pc2.data, dtype=np.float32).reshape(-1, 8)[:,0:3]
     img = np.frombuffer(pc2.data, dtype=np.uint8).reshape(pc2.height, pc2.width, 32)[:, :,16:19]
 
+    height = pc2.height
+    width = pc2.width
+
+    # 画像が回転仕立て場合の処理
+    if rospy.get_param("point_cloud/rotate_image"):
+        img =  cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+        cloud_points = cv2.rotate( cloud_points.reshape(height, width, 3), cv2.ROTATE_90_CLOCKWISE).reshape(-1, 3)
+        height, width = width, height
+
     # 物体検出
-    rects, positions, object_cloud, plane_cloud = detect_objects(cloud_points, pc2.height, pc2.width)
+    rects, positions, object_cloud, plane_cloud = detect_objects(cloud_points, height, width)
 
     object_images = []
     for r in rects:
@@ -204,6 +213,10 @@ def svm_recog( images ):
 
     return labels
 
+def set_param( name, value ):
+    # 存在しなければドフォルト値，存在すればその値を利用
+    value = rospy.get_param( name, value )
+    rospy.set_param( name, value )
 
 def main():
     global pub_objinfo
@@ -213,13 +226,14 @@ def main():
     pub_objinfo = rospy.Publisher('/object_rec/object_info', String, queue_size=1)
 
     # デフォルトパラメータ
-    rospy.set_param("object_rec/plane_detection/distance_threshold", 0.01 )
-    rospy.set_param("object_rec/plane_detection/ransac_n", 3 )
-    rospy.set_param("object_rec/plane_detection/num_iterations", 1000 )
-    rospy.set_param("object_rec/pointcloud_clustering/eps", 0.03 )
-    rospy.set_param("object_rec/pointcloud_clustering/min_points", 20 )
-    rospy.set_param("object_rec/pointcloud_clustering/rect_min", 30 )
-    rospy.set_param("object_rec/show_result", True )
+    set_param("point_cloud/rotate_image", False )
+    set_param("object_rec/plane_detection/distance_threshold", 0.01 )
+    set_param("object_rec/plane_detection/ransac_n", 3 )
+    set_param("object_rec/plane_detection/num_iterations", 1000 )
+    set_param("object_rec/pointcloud_clustering/eps", 0.03 )
+    set_param("object_rec/pointcloud_clustering/min_points", 20 )
+    set_param("object_rec/pointcloud_clustering/rect_min", 30 )
+    set_param("object_rec/show_result", True )
 
     rospy.spin()
         

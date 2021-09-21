@@ -45,6 +45,12 @@ def pointcloud_cb( pc2 ):
 
     h, w = img.shape[:2]
 
+    # 画像が回転してた場合の処理
+    if rospy.get_param("point_cloud/rotate_image"):
+        img =  cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+        xyz = cv2.rotate( xyz, cv2.ROTATE_90_CLOCKWISE)
+        ｈ, ｗ = ｗ, ｈ
+
     corners, ids, _ = cv2.aruco.detectMarkers(img, dictionary)
 
     print( corners )
@@ -97,10 +103,18 @@ def pointcloud_cb( pc2 ):
     
     send_objects_info( rects, positions, labels, quaternions )
 
+def set_param( name, value ):
+    # 存在しなければドフォルト値，存在すればその値を利用
+    value = rospy.get_param( name, value )
+    rospy.set_param( name, value )
+
 
 def main():
     global pub_objinfo, dictionary
     rospy.init_node('ar_marker_rec', anonymous=True)
+
+    # デフォルトパラメータ
+    set_param("point_cloud/rotate_image", False )
 
     rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     pub_objinfo = rospy.Publisher('/ar_marker_rec/object_info', String, queue_size=1)
