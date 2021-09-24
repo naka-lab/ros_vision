@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 import rospy
 from std_msgs.msg import String
@@ -57,9 +58,9 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
 
     [a, b, c, d] = plane_model
     print("equation: %lfx + %lfy + %lfz + %lf = 0" % (a, b, c, d))
-    plane_cloud = pcd.select_by_index(inliers)
+    plane_cloud = pcd.select_down_sample(inliers)
     #inlier_cloud.paint_uniform_color([1.0, 0, 0])
-    object_cloud = pcd.select_by_index(inliers, invert=True)
+    object_cloud = pcd.select_down_sample(inliers, invert=True)
     #o3d.visualization.draw_geometries([inlier_cloud])
     #o3d.visualization.draw_geometries([object_cloud])
 
@@ -68,16 +69,18 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
     eps = rospy.get_param("object_rec/pointcloud_clustering/eps" )
     min_pts = rospy.get_param("object_rec/pointcloud_clustering/min_points" )
 
-    with o3d.utility.VerbosityContextManager(
-            o3d.utility.VerbosityLevel.Debug) as cm:
-        labels = np.array(
-            object_cloud.cluster_dbscan(eps=eps, min_points=min_pts, print_progress=False))
+    #with o3d.utility.VerbosityContextManager(
+    #        o3d.utility.VerbosityLevel.Debug) as cm:
+    #    labels = np.array(
+    #        object_cloud.cluster_dbscan(eps=eps, min_points=min_pts, print_progress=False))
+
+    labels = np.array(object_cloud.cluster_dbscan(eps=eps, min_points=min_pts, print_progress=False))
 
     if len(labels):
         max_label = labels.max()
     else:
         max_label = -1
-    print(f"point cloud has {max_label + 1} clusters")
+    print("point cloud has %d clusters" % (max_label + 1) )
 
     # 画像上の矩形を計算
     pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int)

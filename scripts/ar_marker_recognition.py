@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 import rospy
 from std_msgs.msg import String
@@ -49,7 +50,7 @@ def pointcloud_cb( pc2 ):
     if rospy.get_param("point_cloud/rotate_image"):
         img =  cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
         xyz = cv2.rotate( xyz, cv2.ROTATE_90_CLOCKWISE)
-        ｈ, ｗ = ｗ, ｈ
+        h, w = w, h
 
     corners, ids, _ = cv2.aruco.detectMarkers(img, dictionary)
 
