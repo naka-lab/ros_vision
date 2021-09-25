@@ -69,6 +69,8 @@
   - `object_rec/plane_detection/distance_threshold`：平面に含まれる点の距離
   - `object_rec/plane_detection/ransac_n`：平面のパラメータを計算するのに使われる点の数
   - `object_rec/plane_detection/num_iterations`：ransacの繰り返し回数
+  - `object_rec/plane_detection/min_dist_from_plane`:計算に利用するポイントクラウドの平面からの距離の最小値
+  - `object_rec/plane_detection/max_dist_from_plane`:計算に利用するポイントクラウドの平面からの距離の最大値
   - `object_rec/pointcloud_clustering/eps`：1つの物体に含まれる点の密度
   - `object_rec/pointcloud_clustering/min_points`：物体として検出される最小の点の数
   - `object_rec/pointcloud_clustering/rect_min`：物体として検出される最小の縦と横の長さ
