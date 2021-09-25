@@ -58,10 +58,29 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
 
     [a, b, c, d] = plane_model
     print("equation: %lfx + %lfy + %lfz + %lf = 0" % (a, b, c, d))
-    plane_cloud = pcd.select_down_sample(inliers)
-    #inlier_cloud.paint_uniform_color([1.0, 0, 0])
-    object_cloud = pcd.select_down_sample(inliers, invert=True)
-    #o3d.visualization.draw_geometries([inlier_cloud])
+
+    # バージョンによって関数の名前が違う
+    try:
+        plane_cloud = pcd.select_down_sample(inliers)
+        object_cloud = pcd.select_down_sample(inliers, invert=True)
+    except AttributeError:
+        plane_cloud = pcd.select_by_index(inliers)
+        object_cloud = pcd.select_by_index(inliers, invert=True)
+
+    # 平面から遠い点は除外する
+    dist_min = rospy.get_param("object_rec/plane_detection/min_dist_from_plane")
+    dist_max = rospy.get_param("object_rec/plane_detection/max_dist_from_plane")
+    np_cloud = np.asarray( object_cloud.points )
+    dist = np_cloud[:,0]*a + np_cloud[:,1]*b + np_cloud[:,2]*c + d
+    object_index = np.where( (dist>dist_min) & (dist<dist_max) )[0]
+
+    try:
+        object_cloud = object_cloud.select_down_sample( object_index )
+    except AttributeError:
+        object_cloud = object_cloud.select_by_index( object_index )
+
+    #plane_cloud.paint_uniform_color([1.0, 0, 0])    
+    #o3d.visualization.draw_geometries([plane_cloud])
     #o3d.visualization.draw_geometries([object_cloud])
 
 
@@ -174,8 +193,13 @@ def pointcloud_cb( pc2 ):
             cv2.rectangle( img_display, r[0], r[1], (255, 0, 0), 3 )
             cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 1, cv2.LINE_AA)
 
+        # 平面として推定された点を黒く
         for p in plane_cloud.normals:
             img_display[ int(p[1]), int(p[0]) ] = np.zeros(3)
+
+        # 平面以外のポイントクラウドは緑に
+        for p in object_cloud.normals:
+            img_display[ int(p[1]), int(p[0]) ] = np.array([0, 255, 0])
 
         cv2.namedWindow("img")
         cv2.imshow("img", img_display)
@@ -243,6 +267,9 @@ def main():
     set_param("object_rec/plane_detection/distance_threshold", 0.03 )
     set_param("object_rec/plane_detection/ransac_n", 3 )
     set_param("object_rec/plane_detection/num_iterations", 1000 )
+    set_param("object_rec/plane_detection/min_dist_from_plane", -0.3 )
+    set_param("object_rec/plane_detection/max_dist_from_plane", 0.3 )
+
     set_param("object_rec/pointcloud_clustering/eps", 0.01 )
     set_param("object_rec/pointcloud_clustering/min_points", 10 )
     set_param("object_rec/pointcloud_clustering/rect_min", 20 )
