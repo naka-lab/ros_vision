@@ -148,10 +148,10 @@ def send_objects_info(rects, positions, labels):
 
 
 def pointcloud_cb( pc2 ):
-    lag = rospy.get_time()-pc2.header.stamp.secs
-    if lag>0.5:
-        print("discard queue")
-        return 
+    #lag = rospy.get_time()-pc2.header.stamp.secs
+    #if lag>0.5:
+    #    print("discard queue")
+    #    return 
 
     # この方法だと遅い
     #cloud_points = list(point_cloud2.read_points(pc2, field_names=["x", "y", "z"], skip_nans=False)) 
@@ -258,7 +258,7 @@ def main():
     global pub_objinfo
     svm_train()
     rospy.init_node('object_rec', anonymous=True)
-    rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
+    #rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     pub_objinfo = rospy.Publisher('/object_rec/object_info', String, queue_size=1)
 
     # デフォルトパラメータ
@@ -276,7 +276,10 @@ def main():
     set_param("object_rec/pointcloud_clustering/rect_max", 100 )
     set_param("object_rec/show_result", True )
 
-    rospy.spin()
+    #rospy.spin()
+    while not rospy.is_shutdown():
+        pc = rospy.wait_for_message( "/camera/depth_registered/points", PointCloud2 )
+        pointcloud_cb( pc ) 
         
 if __name__ == '__main__':
     main()
