@@ -138,8 +138,8 @@ def send_objects_info(rects, positions, labels):
                 rospy.Time.now(), "obj:%d,id:%d"%(i, labels[i]), "camera_depth_optical_frame")
         object_info.append(
             { 
-                str("lefttop") : rects[i][0],
-                str("rightbottom") : rects[i][1],
+                str("lefttop") : list(rects[i][0]),
+                str("rightbottom") : list(rects[i][1]),
                 str("position") : [ float(p) for p in positions[i]],
                 str("label") : int(labels[i])
              }
