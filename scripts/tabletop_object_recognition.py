@@ -18,7 +18,7 @@ PATH = os.path.abspath(os.path.dirname(__file__))
 os.chdir(PATH)
 
 # 学習用物体画像の保存先ディレクトリ
-OBJECT_DIR = "objects"
+OBJECT_DIR = "objects_example"
 
 # 物体情報のpublisher
 pub_objinfo = None
