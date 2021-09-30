@@ -96,6 +96,9 @@ def main():
     time.sleep(1)
     print( "s:save image, d:make new directory, q:quit\r" )
     rospy.spin()
-        
+
 if __name__ == '__main__':
+    SAVE_DIR_ = SAVE_DIR+"%03d/"%save_dirID
+    if not os.path.exists( SAVE_DIR_ ):
+            os.makedirs( SAVE_DIR_ )
     main()
