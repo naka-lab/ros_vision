@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 import rospy, rosnode
 from sensor_msgs.msg import Image
@@ -9,12 +10,13 @@ import time
 
 os.chdir(os.path.dirname(__file__))
 
-SAVE_DIR = "tmp_img"
+SAVE_DIR = "tmp_img/"
 
 
 pt1 = None
 pt2 = None
 lbottun_down = False
+save_dirID = 34
 def mouse_event(event, x, y, flags, param):
     global pt1, pt2, lbottun_down
     # 左クリックイベント
@@ -27,7 +29,7 @@ def mouse_event(event, x, y, flags, param):
     if lbottun_down:
         pt2 = (x, y)
 
-def save_img( img, pt1, pt2 ):
+def save_img( img, pt1, pt2, save_dirID ):
     x1 = min( pt1[0], pt2[0] )
     y1 = min( pt1[1], pt2[1] )
     x2 = max( pt1[0], pt2[0] )
@@ -35,11 +37,8 @@ def save_img( img, pt1, pt2 ):
 
     rect_img = img[y1:y2, x1:x2, :]
 
-    if not os.path.exists( SAVE_DIR ):
-        os.mkdir( SAVE_DIR )
-
     for i in range(100):
-        fname = os.path.join( SAVE_DIR, "%03d.png"%i )
+        fname = os.path.join( SAVE_DIR, "%03d/"%save_dirID, "%03d.png"%i )
 
         if not os.path.exists(fname):
             cv2.imwrite( fname, rect_img )
@@ -48,6 +47,7 @@ def save_img( img, pt1, pt2 ):
 
 def image_cb( img ):
     global pt1, pt2
+    global save_dirID
     cv2.namedWindow("img")
     cv2.setMouseCallback("img", mouse_event)
 
@@ -65,12 +65,19 @@ def image_cb( img ):
 
     if c==115: # s
         if pt1!=None and pt2!=None:
-            save_img( cv2.cvtColor( img, cv2.COLOR_RGB2BGR ), pt1, pt2 )
+            save_img( cv2.cvtColor( img, cv2.COLOR_RGB2BGR ), pt1, pt2, save_dirID )
         else:
             print("画像をドラッグして保存範囲を選択してください")
     elif c==113: # q
         cv2.destroyAllWindows()
         rosnode.kill_nodes([rospy.get_name() ])
+    elif c ==ord("d"):
+        save_dirID+=1
+        SAVE_DIR_ = SAVE_DIR+"%03d/"%save_dirID
+        if not os.path.exists( SAVE_DIR_ ):
+            os.makedirs( SAVE_DIR_ )
+            print("next dir:",save_dirID)
+
 
 def set_param( name, value ):
     # 存在しなければドフォルト値，存在すればその値を利用
@@ -87,7 +94,7 @@ def main():
     rospy.Subscriber("camera/color/image_raw", Image, image_cb)
 
     time.sleep(1)
-    print( "s:save image, q:quit\r" )
+    print( "s:save image, d:make new directory, q:quit\r" )
     rospy.spin()
         
 if __name__ == '__main__':
