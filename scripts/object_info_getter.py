@@ -12,6 +12,9 @@ def callback(data):
         print( "lefttop:", o["lefttop"] )
         print( "rightbottom:", o["rightbottom"] )
         print( "position:", o["position"] )
+        #print( "position_mindepth:", o["position_mindepth"] )
+        #print( "position_center:", o["position_center"] )
+        #print( "position_bottom:", o["position_bottom"] )
         print( "-----------" )
     
 def main():

@@ -106,6 +106,8 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
     points = np.asarray(object_cloud.points)
     rects = []
     positions = []
+    positions_mindepth = []
+    pixpos_mindepth = []
     rect_min = rospy.get_param("object_rec/pointcloud_clustering/rect_min", )
     rect_max = rospy.get_param("object_rec/pointcloud_clustering/rect_max", )
     for l in range(max_label+1):
@@ -123,12 +125,15 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
             pos = np.average( points[l_th_obj], axis=0 )
             positions.append(pos)
 
+            idx = np.argmin( points[l_th_obj][:,2] )
+            positions_mindepth.append( points[l_th_obj][idx] )
+            pixpos_mindepth.append( pix_pos[l_th_obj][idx] )
 
-    return rects, positions, object_cloud, plane_cloud
+    return rects, positions, object_cloud, plane_cloud, positions_mindepth, pixpos_mindepth
 
 
 # 物体情報を送信
-def send_objects_info(rects, positions, labels):
+def send_objects_info(rects, positions, labels, positions_mindepth, positions_center, positions_bottom):
     global pub_objinfo
     br = tf.TransformBroadcaster()
     object_info = []
@@ -141,7 +146,10 @@ def send_objects_info(rects, positions, labels):
                 str("lefttop") : list(rects[i][0]),
                 str("rightbottom") : list(rects[i][1]),
                 str("position") : [ float(p) for p in positions[i]],
-                str("label") : int(labels[i])
+                str("label") : int(labels[i]),
+                str("position_mindepth") : [ float(p) for p in positions_mindepth[i]],
+                str("position_center") : [ float(p) for p in positions_center[i]],
+                str("position_bottom") : [ float(p) for p in positions_bottom[i]],
              }
         )
     pub_objinfo.publish( yaml.dump( object_info )  )
@@ -170,11 +178,25 @@ def pointcloud_cb( pc2 ):
 
     # 物体検出
     depth_thresh = rospy.get_param("object_rec/plane_detection/depth_threshold")
-    rects, positions, object_cloud, plane_cloud = detect_objects(cloud_points, height, width, depth_thresh)
+    rects, positions, object_cloud, plane_cloud, positions_mindepth, pixpos_mindepth = detect_objects(cloud_points, height, width, depth_thresh)
 
     object_images = []
+    positions_center = []
+    pixpos_center = []
+    positions_bottom = []
+    pixpos_bottom = []
     for r in rects:
         object_images.append( img[ r[0][1]:r[1][1], r[0][0]:r[1][0], : ] )
+
+        y = int((r[0][1]+r[1][1])/2)
+        x = int((r[0][0]+r[1][0])/2)
+        pixpos_center.append( (x, y)  )
+        positions_center.append( cloud_points[y*width+x] )
+
+        y = int((y+r[1][1])/2)
+        pixpos_bottom.append( (x, y)  )
+        positions_bottom.append( cloud_points[y*width+x] )
+
 
     # 物体認識
     if len(object_images):
@@ -183,7 +205,7 @@ def pointcloud_cb( pc2 ):
         labels = []
 
     # 検出・認識された物体情報をpublish
-    send_objects_info( rects, positions, labels )
+    send_objects_info( rects, positions, labels, positions_mindepth, positions_center, positions_center )
 
     # 結果を表示
     if rospy.get_param("object_rec/show_result" ):
@@ -200,6 +222,15 @@ def pointcloud_cb( pc2 ):
         # 平面以外のポイントクラウドは緑に
         for p in object_cloud.normals:
             img_display[ int(p[1]), int(p[0]) ] = np.array([0, 255, 0])
+
+        for p in pixpos_mindepth:
+            cv2.circle( img_display, tuple(p), 10, (0, 0, 255), 3 )
+
+        for p in pixpos_center:
+            cv2.circle( img_display, tuple(p), 10, (0, 255, 0), 3 )
+
+        for p in pixpos_bottom:
+            cv2.circle( img_display, tuple(p), 10, (255, 0, 0), 3 )
 
         cv2.namedWindow("img")
         cv2.imshow("img", img_display)
