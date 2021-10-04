@@ -39,9 +39,10 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
     pix_pos = pix_pos.reshape( -1, 3 )
 
     # 範囲を限定する
+    skip_num = rospy.get_param("object_rec/plane_detection/depth_skip_num")
     filter_cond = (cloud_points[:,2]<depth_thresh) * (cloud_points[:,2]>0)
-    cloud_points = cloud_points[ filter_cond ].reshape(-1, 3)[::5,:]
-    pix_pos = pix_pos[ filter_cond ].reshape(-1, 3)[::5,:]
+    cloud_points = cloud_points[ filter_cond ].reshape(-1, 3)[::skip_num,:]
+    pix_pos = pix_pos[ filter_cond ].reshape(-1, 3)[::skip_num,:]
     #color = __color.flatten().reshape(-1, 3)[ filter_cond ][::10,:]
 
     pcd = o3d.geometry.PointCloud()
@@ -294,6 +295,7 @@ def main():
 
     # デフォルトパラメータ
     set_param("point_cloud/rotate_image", False )
+    set_param("object_rec/plane_detection/depth_skip_num", 5 )
     set_param("object_rec/plane_detection/depth_threshold", 1.3 )
     set_param("object_rec/plane_detection/distance_threshold", 0.03 )
     set_param("object_rec/plane_detection/ransac_n", 3 )
