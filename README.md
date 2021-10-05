@@ -66,6 +66,7 @@
 - `rosrun ros_utils param_setting_gui.py`でGUIからも設定可能
 - 設定可能なパラメータ
   - `point_cloud/rotate_image`:画像を回転するかどうか 
+  - `object_rec/plane_detection/depth_skip_num`:計算に利用する点の間隔．大きくすると高速になるが精度が下がる可能性がある．
   - `object_rec/plane_detection/distance_threshold`：平面に含まれる点の距離
   - `object_rec/plane_detection/ransac_n`：平面のパラメータを計算するのに使われる点の数
   - `object_rec/plane_detection/num_iterations`：ransacの繰り返し回数
