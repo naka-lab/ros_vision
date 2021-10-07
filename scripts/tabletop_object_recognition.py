@@ -298,14 +298,14 @@ def main():
         print(sys.argv[1])
         svm_model_path = sys.argv[1]
 
-    if svm_model_path==None:
+    if svm_model_path==None or svm_model_path=="":
         # モデルが指定されてない場合
+        print("モデル指定なし")
         svm_train()
     elif not os.path.exists( svm_model_path ):
-        # モデルは指定されているが，存在しない場合        
-        svm_train()
-
+        print("モデルファイルなし", svm_model_path)
         print( "save model:", svm_model_path )
+        svm_train()
         pickle.dump(svm, open(svm_model_path, 'wb'))
     else:
         # モデルが存在する場合
