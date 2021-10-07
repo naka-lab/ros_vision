@@ -13,6 +13,8 @@ import os
 from sklearn.svm import SVC
 import tf
 import yaml
+import pickle
+import sys
 
 PATH = os.path.abspath(os.path.dirname(__file__))
 os.chdir(PATH)
@@ -264,6 +266,7 @@ def svm_train():
             labels.append( i )
     print("train svm...")
     svm.fit( features, labels )
+
     print("done!")
 
 def svm_recog( images ):
@@ -288,7 +291,27 @@ def set_param( name, value ):
 
 def main():
     global pub_objinfo
-    svm_train()
+    global svm
+
+    svm_model_path = None
+    if len(sys.argv)>1:
+        print(sys.argv[1])
+        svm_model_path = sys.argv[1]
+
+    if svm_model_path==None:
+        # モデルが指定されてない場合
+        svm_train()
+    elif not os.path.exists( svm_model_path ):
+        # モデルは指定されているが，存在しない場合        
+        svm_train()
+
+        print( "save model:", svm_model_path )
+        pickle.dump(svm, open(svm_model_path, 'wb'))
+    else:
+        # モデルが存在する場合
+        print( "load model:", svm_model_path )
+        svm = pickle.load(open(svm_model_path, 'rb'))
+
     rospy.init_node('object_rec', anonymous=True)
     #rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     pub_objinfo = rospy.Publisher('/object_rec/object_info', String, queue_size=1)
