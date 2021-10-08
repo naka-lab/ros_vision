@@ -47,6 +47,10 @@ def detect_objects( cloud_points, height, width, depth_thresh ):
     pix_pos = pix_pos[ filter_cond ].reshape(-1, 3)[::skip_num,:]
     #color = __color.flatten().reshape(-1, 3)[ filter_cond ][::10,:]
 
+    # ポイントクラウドが0個だと落ちるのでreturn
+    if len(cloud_points)==0:
+        return None
+
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(cloud_points)
     #pcd.colors = o3d.utility.Vector3dVector(color.reshape(-1,3)/255.0)
@@ -185,7 +189,13 @@ def pointcloud_cb( pc2 ):
 
     # 物体検出
     depth_thresh = rospy.get_param("object_rec/plane_detection/depth_threshold")
-    rects, positions, object_cloud, plane_cloud, positions_mindepth, pixpos_mindepth = detect_objects(cloud_points, height, width, depth_thresh)
+    detection_res = detect_objects(cloud_points, height, width, depth_thresh)
+
+    if detection_res!=None:
+        rects, positions, object_cloud, plane_cloud, positions_mindepth, pixpos_mindepth = detection_res
+    else:
+        print("検出失敗")
+        return
 
     object_images = []
     positions_center = []
