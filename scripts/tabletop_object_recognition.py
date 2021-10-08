@@ -32,11 +32,11 @@ feat_extract_net = cv2.dnn.readNetFromCaffe( "bvlc_googlenet.prototxt", "bvlc_go
 svm = None
 
 # 物体検出
-def detect_objects( cloud_points, h, w, depth_thresh ):
+def detect_objects( cloud_points, height, width, depth_thresh ):
     # ポイントクラウドの画素位置を計算
-    pix_pos = np.zeros((h, w, 3))
-    y_index = np.arange( h )
-    x_index = np.arange( w  )
+    pix_pos = np.zeros((height, width, 3))
+    y_index = np.arange( height )
+    x_index = np.arange( width  )
     pix_pos[:,:,0], pix_pos[:,:,1] = np.meshgrid(x_index, y_index)
     pix_pos = pix_pos.reshape( -1, 3 )
 
@@ -115,15 +115,19 @@ def detect_objects( cloud_points, h, w, depth_thresh ):
     rect_max = rospy.get_param("object_rec/pointcloud_clustering/rect_max", )
     for l in range(max_label+1):
         l_th_obj = (labels==l)
-        top_left = np.min(pix_pos[l_th_obj], 0)
-        bottom_right = np.max(pix_pos[l_th_obj], 0)
-        top_left = (int(top_left[0]), int(top_left[1]))
-        bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
-        w = bottom_right[0]-top_left[0]
-        h = bottom_right[1]-top_left[1]
+        left_top = np.min(pix_pos[l_th_obj], 0)
+        right_bottom = np.max(pix_pos[l_th_obj], 0)
+        w = right_bottom[0]-left_top[0]
+        h = right_bottom[1]-left_top[1]
+
+        # 下側を少しだけ伸ばす
+        right_bottom[1] = min( right_bottom[1]+h*0.3, height )
+
+        left_top = (int(left_top[0]), int(left_top[1]))
+        right_bottom = (int(right_bottom[0]), int(right_bottom[1]))
 
         if w>rect_min and h>rect_min and w<rect_max and h<rect_max: 
-            rects.append( (top_left, bottom_right) )
+            rects.append( (left_top, right_bottom) )
             
             pos = np.average( points[l_th_obj], axis=0 )
             positions.append(pos)
