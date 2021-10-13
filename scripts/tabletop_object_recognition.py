@@ -230,7 +230,7 @@ def pointcloud_cb( pc2 ):
         pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int)
         for r, l  in zip(rects, labels):
             cv2.rectangle( img_display, r[0], r[1], (255, 0, 0), 3 )
-            cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 1, cv2.LINE_AA)
+            cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2, cv2.LINE_AA)
 
         # 平面として推定された点を黒く
         for p in plane_cloud.normals:
@@ -250,6 +250,7 @@ def pointcloud_cb( pc2 ):
             cv2.circle( img_display, tuple(p), 10, (255, 0, 0), 3 )
 
         cv2.namedWindow("img")
+        img_display = cv2.resize(img_display, dsize=None, fx=0.6, fy=0.6)
         cv2.imshow("img", img_display)
         cv2.waitKey(10)
     else:
