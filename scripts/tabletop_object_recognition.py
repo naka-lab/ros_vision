@@ -86,6 +86,10 @@ def detect_objects( cloud_points, height, width, depth_thresh ):
     except AttributeError:
         object_cloud = object_cloud.select_by_index( object_index )
 
+    # 点の数が0個だと落ちる（？）のでリターン
+    if len(object_cloud.points)==0:
+        return None
+
     #plane_cloud.paint_uniform_color([1.0, 0, 0])    
     #o3d.visualization.draw_geometries([plane_cloud])
     #o3d.visualization.draw_geometries([object_cloud])
