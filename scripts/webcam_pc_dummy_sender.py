@@ -28,7 +28,6 @@ def pubish_pointcloud2( img, dummy_depth ):
     data[:,:,3] = img_int[:,:,0] + img_int[:,:,1]*256 + img_int[:,:,2]*256*256
     data[:,:,4] = 0
 
-    print(data.reshape(-1,5)[0])
     pc = pc2.create_cloud(HEADER, FIELDS, data.reshape(-1,5))
 
     pc.width = img.shape[1]
@@ -63,6 +62,9 @@ def capture():
             capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+        if cv2.getWindowProperty("webcam",cv2.WND_PROP_VISIBLE)==0.0:
             break
 
     capture.release()
