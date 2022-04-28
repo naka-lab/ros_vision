@@ -32,6 +32,7 @@ def pubish_pointcloud2( img, dummy_depth ):
 
     pc.width = img.shape[1]
     pc.height = img.shape[0]
+    pc.header.stamp = rospy.Time.now()
     pub_pc.publish( pc )
 
 
