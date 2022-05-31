@@ -99,6 +99,7 @@ def pointcloud_cb( pc2 ):
         cv2.circle( img_display, tuple(ilist(corners[i][0][3])), 10, (0,0,255) )
 
     cv2.aruco.drawDetectedMarkers(img_display, corners, ids, (0,255,0))
+    img_display = cv2.resize(img_display, dsize=None, fx=0.6, fy=0.6)
     cv2.imshow('img',img_display)
     cv2.waitKey(10)
     

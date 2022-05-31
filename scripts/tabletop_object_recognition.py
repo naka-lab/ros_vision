@@ -86,6 +86,10 @@ def detect_objects( cloud_points, height, width, depth_thresh ):
     except AttributeError:
         object_cloud = object_cloud.select_by_index( object_index )
 
+    # 点の数が0個だと落ちる（？）のでリターン
+    if len(object_cloud.points)==0:
+        return None
+
     #plane_cloud.paint_uniform_color([1.0, 0, 0])    
     #o3d.visualization.draw_geometries([plane_cloud])
     #o3d.visualization.draw_geometries([object_cloud])
@@ -230,7 +234,7 @@ def pointcloud_cb( pc2 ):
         pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int)
         for r, l  in zip(rects, labels):
             cv2.rectangle( img_display, r[0], r[1], (255, 0, 0), 3 )
-            cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 1, cv2.LINE_AA)
+            cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2, cv2.LINE_AA)
 
         # 平面として推定された点を黒く
         for p in plane_cloud.normals:
@@ -250,6 +254,7 @@ def pointcloud_cb( pc2 ):
             cv2.circle( img_display, tuple(p), 10, (255, 0, 0), 3 )
 
         cv2.namedWindow("img")
+        img_display = cv2.resize(img_display, dsize=None, fx=0.6, fy=0.6)
         cv2.imshow("img", img_display)
         cv2.waitKey(10)
     else:

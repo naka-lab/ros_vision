@@ -70,6 +70,11 @@ def send_maker( x, y, z, id, scale=0.05, rgb=(1,0,0) ):
 
 
 def pointcloud_cb( pc2 ):
+    lag = rospy.get_time()-pc2.header.stamp.secs
+    if lag>0.5:
+        print("discard queue")
+        return 
+
     xyz = np.frombuffer(pc2.data, dtype=np.float32).reshape(pc2.height, pc2.width, 8)[:,:,0:3]
     img = np.frombuffer(pc2.data, dtype=np.uint8).reshape(pc2.height, pc2.width, 32)[:, :,16:19]
 
