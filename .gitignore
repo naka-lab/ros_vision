@@ -3,3 +3,4 @@ scripts/objects/*/*
 *.pyc
 scripts/open_pose_utils/pose_model_scratch.pth
 /scripts/tmp_img_1007/*
+scripts/bvlc_reference_caffenet.caffemodel

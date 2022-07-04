@@ -10,11 +10,12 @@ import open3d as o3d
 import cv2
 import glob
 import os
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 import tf
 import yaml
 import pickle
 import sys
+import gdown
 
 PATH = os.path.abspath(os.path.dirname(__file__))
 os.chdir(PATH)
@@ -26,7 +27,11 @@ OBJECT_DIR = "objects"
 pub_objinfo = None
 
 # 特徴量抽出用ネットワーク
-feat_extract_net = cv2.dnn.readNetFromCaffe( "bvlc_googlenet.prototxt", "bvlc_googlenet.caffemodel")
+if not os.path.exists("bvlc_reference_caffenet.caffemodel"):
+    print("Download model file: bvlc_reference_caffenet.caffemodel")
+    gdown.download( "https://drive.google.com/uc?id=19TavicsEcqm_tnZVM4-PoOWOQJkMNkEp" )
+
+feat_extract_net = cv2.dnn.readNetFromCaffe( "deploy.prototxt", "bvlc_reference_caffenet.caffemodel")
 
 # 物体認識用SVM
 svm = None
@@ -170,7 +175,7 @@ def send_objects_info(rects, positions, labels, positions_mindepth, positions_ce
     pub_objinfo.publish( yaml.dump( object_info )  )
 
 
-def pointcloud_cb( pc2 ):
+def recognize_objets( pc2 ):
     #lag = rospy.get_time()-pc2.header.stamp.secs
     #if lag>0.5:
     #    print("discard queue")
@@ -237,21 +242,19 @@ def pointcloud_cb( pc2 ):
             cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2, cv2.LINE_AA)
 
         # 平面として推定された点を黒く
-        for p in plane_cloud.normals:
-            img_display[ int(p[1]), int(p[0]) ] = np.zeros(3)
+        #for p in plane_cloud.normals:
+        #    img_display[ int(p[1]), int(p[0]) ] = np.zeros(3)
+        normals = np.array(plane_cloud.normals, dtype=np.int)
+        img_display[normals[:,1], normals[:,0]] = np.zeros(3)
 
         # 平面以外のポイントクラウドは緑に
-        for p in object_cloud.normals:
-            img_display[ int(p[1]), int(p[0]) ] = np.array([0, 255, 0])
-
-        for p in pixpos_mindepth:
-            cv2.circle( img_display, tuple(p), 10, (0, 0, 255), 3 )
+        #for p in object_cloud.normals:
+        #    img_display[ int(p[1]), int(p[0]) ] = np.array([0, 255, 0])
+        normals = np.array(object_cloud.normals, dtype=np.int)
+        img_display[normals[:,1], normals[:,0]] = np.array([0, 255, 0])
 
         for p in pixpos_center:
             cv2.circle( img_display, tuple(p), 10, (0, 255, 0), 3 )
-
-        for p in pixpos_bottom:
-            cv2.circle( img_display, tuple(p), 10, (255, 0, 0), 3 )
 
         cv2.namedWindow("img")
         img_display = cv2.resize(img_display, dsize=None, fx=0.6, fy=0.6)
@@ -265,13 +268,13 @@ def pointcloud_cb( pc2 ):
 def extract_feature( image ):
     blob = cv2.dnn.blobFromImage(image, 1, (224, 224), (104, 117, 123))
     feat_extract_net.setInput(blob)
-    preds = feat_extract_net.forward("pool5/7x7_s1")
-    features = preds[0, :, 0, 0]
+    preds = feat_extract_net.forward("fc7")
+    features = preds.flatten()
     return features
 
 def svm_train():
     global svm
-    svm = SVC()
+    svm = LinearSVC()
     features = []
     labels = []
 
@@ -298,7 +301,7 @@ def svm_recog( images ):
     for img in images:
         feat = extract_feature( img )
         features.append( feat )
-    
+        
     labels = svm.predict( features )
 
     return labels
@@ -332,7 +335,6 @@ def main():
         svm = pickle.load(open(svm_model_path, 'rb'))
 
     rospy.init_node('object_rec', anonymous=True)
-    #rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     pub_objinfo = rospy.Publisher('/object_rec/object_info', String, queue_size=1)
 
     # デフォルトパラメータ
@@ -351,10 +353,11 @@ def main():
     set_param("object_rec/pointcloud_clustering/rect_max", 100 )
     set_param("object_rec/show_result", True )
 
+    #rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     #rospy.spin()
     while not rospy.is_shutdown():
-        pc = rospy.wait_for_message( "/camera/depth_registered/points", PointCloud2 )
-        pointcloud_cb( pc ) 
-        
+        recieved_pc = rospy.wait_for_message( "/camera/depth_registered/points", PointCloud2 )
+        recognize_objets( recieved_pc ) 
+
 if __name__ == '__main__':
     main()
