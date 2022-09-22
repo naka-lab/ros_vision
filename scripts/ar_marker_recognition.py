@@ -77,20 +77,28 @@ def pointcloud_cb( pc2 ):
         p1 = xyz[ int(corners[i][0][0][1]), int(corners[i][0][0][0]) ]
         p2 = xyz[ int(corners[i][0][1][1]), int(corners[i][0][1][0]) ]
         p3 = xyz[ int(corners[i][0][3][1]), int(corners[i][0][3][0]) ]
-        
-        # z軸回転とy軸回転でx軸を一致させる回転を計算
-        v = p2 - p1
-        r = math.atan2( v[1], v[0] )
-        q = tf.transformations.quaternion_about_axis(r, [0,0,1])
 
-        r = -math.atan2( v[2], v[0] )
-        q = tf.transformations.quaternion_multiply( q, tf.transformations.quaternion_about_axis(r, [0,1,0]) )
-
-        # x軸回転でy軸を一致させる回転を計算
         v = p3 - p1
-        r = math.atan2( v[2], v[1] )
-        q = tf.transformations.quaternion_multiply( q, tf.transformations.quaternion_about_axis(r, [1,0,0]) )
+        v = v/np.linalg.norm(v)
 
+        rz = math.atan2( v[1], v[0] )
+        ry =  math.atan2( -v[2]*math.cos(rz), v[0] )
+
+        # 180度ずれた解が出てきてないか確認
+        if np.sign(math.cos(rz)*math.cos(ry))!=np.sign(v[0]):
+            rz = math.atan2( v[1], v[0] )+math.pi
+            ry =  math.atan2( -v[2]*math.cos(rz), v[0] )
+
+        v = p2 - p1
+        v = v/np.linalg.norm(v)
+        sin_rx = v[2]/math.cos(ry)
+        rx = math.atan2( math.sin(rz) * v[2], (math.cos(rz)*math.sin(ry)*sin_rx-v[0])*math.cos(ry) )
+
+        # 180度ずれた解がでてきていないか確認
+        if np.sign(v[2])!=np.sign(math.cos(ry)*math.sin(rx)):
+            rx += math.pi
+
+        q = tf.transformations.quaternion_from_euler(rz, ry, rx, "rzyx")
         quaternions.append( q )
 
         # 計算使った点を描画
