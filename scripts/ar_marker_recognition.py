@@ -91,8 +91,7 @@ def pointcloud_cb( pc2 ):
 
         v = p2 - p1
         v = v/np.linalg.norm(v)
-        sin_rx = v[2]/math.cos(ry)
-        rx = math.atan2( math.sin(rz) * v[2], (math.cos(rz)*math.sin(ry)*sin_rx-v[0])*math.cos(ry) )
+        rx = math.atan2( math.sin(rz) * v[2], math.cos(rz)*math.sin(ry)*v[2]-math.cos(ry)*v[0])
 
         # 180度ずれた解がでてきていないか確認
         if np.sign(v[2])!=np.sign(math.cos(ry)*math.sin(rx)):
