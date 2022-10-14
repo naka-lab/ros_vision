@@ -21,7 +21,7 @@ def ilist(lst): return [ int(i) for i in lst ]
 def flist(lst): return [ float(i) for i in lst ]
 
 # 物体情報を送信
-def send_objects_info(rects, positions, labels, quaternions):
+def send_objects_info(rects, positions, labels, quaternions, timestamp):
     global pub_objinfo
     br = tf.TransformBroadcaster()
     object_info = []
@@ -35,7 +35,8 @@ def send_objects_info(rects, positions, labels, quaternions):
                 str("lefttop") : ilist( rects[i][0] ),
                 str("rightbottom") : ilist( rects[i][1] ),
                 str("position") : flist( positions[i] ),
-                str("label") : int(labels[i])
+                str("label") : int(labels[i]),
+                str("stamp") : float(timestamp)
              }
         )
     pub_objinfo.publish( yaml.dump( object_info )  )
@@ -110,7 +111,7 @@ def pointcloud_cb( pc2 ):
     cv2.imshow('img',img_display)
     cv2.waitKey(10)
     
-    send_objects_info( rects, positions, labels, quaternions )
+    send_objects_info( rects, positions, labels, quaternions, pc2.header.stamp.to_sec() )
 
 def set_param( name, value ):
     # 存在しなければドフォルト値，存在すればその値を利用
