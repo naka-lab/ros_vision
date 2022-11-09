@@ -10,6 +10,7 @@ import tf
 import yaml
 import os
 import math
+import queue
  
  
 # 物体情報のpublisher
@@ -41,7 +42,7 @@ def send_objects_info(rects, positions, labels, quaternions, timestamp):
         )
     pub_objinfo.publish( yaml.dump( object_info )  )
 
-def pointcloud_cb( pc2 ):
+def proc_pointcloud( pc2 ):
     xyz = np.frombuffer(pc2.data, dtype=np.float32).reshape(pc2.height, pc2.width, 8)[:,:,0:3]
     img = np.frombuffer(pc2.data, dtype=np.uint8).reshape(pc2.height, pc2.width, 32)[:, :,16:19]
 
@@ -126,12 +127,27 @@ def main():
     # デフォルトパラメータ
     set_param("point_cloud/rotate_image", False )
 
-    rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
+    #rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     pub_objinfo = rospy.Publisher('/ar_marker_rec/object_info', String, queue_size=1)
-
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
-    rospy.spin()
+
+
+    que = queue.Queue()
+    def pointcloud_cb( pc2 ):
+        while que.qsize()>1:
+            try:
+                que.get_nowait()
+            except queue.Empty:
+                pass
+        que.put(pc2)
+    rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
+
+    while not rospy.is_shutdown():
+        proc_pointcloud( que.get() ) 
+
+
+    #rospy.spin()
 
 
 if __name__ == '__main__':

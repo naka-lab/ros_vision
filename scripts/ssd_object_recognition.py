@@ -8,6 +8,7 @@ import numpy as np
 import tf
 import yaml
 import os
+import queue
  
 path = os.path.abspath(os.path.dirname(__file__))
 os.chdir(path)
@@ -56,12 +57,7 @@ def send_objects_info(rects, positions, labels):
         )
     pub_objinfo.publish( yaml.dump( object_info )  )
 
-def pointcloud_cb( pc2 ):
-    lag = rospy.get_time()-pc2.header.stamp.secs
-    if lag>0.5:
-        print("discard queue")
-        return 
-
+def proc_pointcloud( pc2 ):
     xyz = np.frombuffer(pc2.data, dtype=np.float32).reshape(pc2.height, pc2.width, 8)[:,:,0:3]
     img = np.frombuffer(pc2.data, dtype=np.uint8).reshape(pc2.height, pc2.width, 32)[:, :,16:19]
 
@@ -115,9 +111,23 @@ def main():
     rospy.set_param("ssd_object_rec/conf_thresh", 0.5 )
     rospy.set_param("ssd_object_rec/show_result", True )
 
-    rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
+    #rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     pub_objinfo = rospy.Publisher('/ssd_object_rec/object_info', String, queue_size=1)
-    rospy.spin()
+
+    que = queue.Queue()
+    def pointcloud_cb( pc2 ):
+        while que.qsize()>1:
+            try:
+                que.get_nowait()
+            except queue.Empty:
+                pass
+        que.put(pc2)
+    rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
+
+    while not rospy.is_shutdown():
+        proc_pointcloud( que.get() ) 
+
+    #rospy.spin()
 
 
 if __name__ == '__main__':
