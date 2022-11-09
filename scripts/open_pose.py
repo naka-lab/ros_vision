@@ -222,15 +222,13 @@ def main():
     #rospy.spin()
 
     que = queue.Queue()
-
     def pointcloud_cb( pc2 ):
-        if que.qsize()>0:
+        while que.qsize()>1:
             try:
                 que.get_nowait()
             except queue.Empty:
                 pass
         que.put(pc2)
-
     rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
 
     while not rospy.is_shutdown():

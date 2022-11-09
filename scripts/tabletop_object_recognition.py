@@ -16,6 +16,7 @@ import yaml
 import pickle
 import sys
 import gdown
+import queue
 
 PATH = os.path.abspath(os.path.dirname(__file__))
 os.chdir(PATH)
@@ -118,7 +119,7 @@ def detect_objects( cloud_points, height, width, depth_thresh ):
     print("point cloud has %d clusters" % (max_label + 1) )
 
     # 画像上の矩形を計算
-    pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int)
+    pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int32)
     points = np.asarray(object_cloud.points)
     rects = []
     positions = []
@@ -236,7 +237,7 @@ def recognize_objets( pc2 ):
     # 結果を表示
     if rospy.get_param("object_rec/show_result" ):
         img_display = np.copy(img)
-        pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int)
+        pix_pos = np.asarray(object_cloud.normals)[:,0:2].astype(np.int32)
         for r, l  in zip(rects, labels):
             cv2.rectangle( img_display, r[0], r[1], (255, 0, 0), 3 )
             cv2.putText(img_display, 'ID: %d'%l, r[0], cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2, cv2.LINE_AA)
@@ -244,13 +245,13 @@ def recognize_objets( pc2 ):
         # 平面として推定された点を黒く
         #for p in plane_cloud.normals:
         #    img_display[ int(p[1]), int(p[0]) ] = np.zeros(3)
-        normals = np.array(plane_cloud.normals, dtype=np.int)
+        normals = np.array(plane_cloud.normals, dtype=np.int32)
         img_display[normals[:,1], normals[:,0]] = np.zeros(3)
 
         # 平面以外のポイントクラウドは緑に
         #for p in object_cloud.normals:
         #    img_display[ int(p[1]), int(p[0]) ] = np.array([0, 255, 0])
-        normals = np.array(object_cloud.normals, dtype=np.int)
+        normals = np.array(object_cloud.normals, dtype=np.int32)
         img_display[normals[:,1], normals[:,0]] = np.array([0, 255, 0])
 
         for p in pixpos_center:
@@ -355,9 +356,19 @@ def main():
 
     #rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
     #rospy.spin()
+
+    que = queue.Queue()
+    def pointcloud_cb( pc2 ):
+        while que.qsize()>1:
+            try:
+                que.get_nowait()
+            except queue.Empty:
+                pass
+        que.put(pc2)
+    rospy.Subscriber("/camera/depth_registered/points", PointCloud2, pointcloud_cb, queue_size=1)
+
     while not rospy.is_shutdown():
-        recieved_pc = rospy.wait_for_message( "/camera/depth_registered/points", PointCloud2 )
-        recognize_objets( recieved_pc ) 
+        recognize_objets( que.get() ) 
 
 if __name__ == '__main__':
     main()
