@@ -11,6 +11,7 @@ import yaml
 import os
 import math
 import queue
+from math import isnan
  
  
 # 物体情報のpublisher
@@ -27,10 +28,14 @@ def send_objects_info(rects, positions, labels, quaternions, timestamp):
     br = tf.TransformBroadcaster()
     object_info = []
     for i, p in enumerate(positions):
-        br.sendTransform(p,
-                #tf.transformations.quaternion_from_euler(0, 0, 0),
-                quaternions[i],
-                rospy.Time.now(), "ar:%d"%(labels[i]), "camera_depth_optical_frame")
+        if isnan(p[0]) or isnan(p[1]) or isnan(p[2]) or isnan(quaternions[i][0]) or isnan(quaternions[i][1]) or isnan(quaternions[i][2]) or isnan(quaternions[i][3]):
+            pass
+        else:
+            br.sendTransform(p,
+                    #tf.transformations.quaternion_from_euler(0, 0, 0),
+                    quaternions[i],
+                    rospy.Time.now(), "ar:%d"%(labels[i]), "camera_depth_optical_frame")
+
         object_info.append(
             { 
                 str("lefttop") : ilist( rects[i][0] ),
