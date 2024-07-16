@@ -10,7 +10,6 @@
   sudo apt-get install ros-noetic-rgbd-launch
   sudo apt-get install ros-noetic-realsense2-camera
   ```
-  ※1つ目のコマンドはproxyを設定しているので，学外でインストールするときは注意
 
 - 物体認識rosパッケージと依存ライブラリをダウンロード
   ```
